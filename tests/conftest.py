@@ -6,6 +6,13 @@
 import pytest
 from common.config import BASE_URL
 from common.api_client import APIClient
+import logging
+
+def pytest_configure():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    )
 
 @pytest.fixture(scope="session")
 def base_url():
