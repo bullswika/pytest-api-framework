@@ -7,7 +7,6 @@ import pytest
 from common.config import BASE_URL
 from common.api_client import APIClient
 import logging
-from selenium import webdriver
 
 
 def pytest_configure():
