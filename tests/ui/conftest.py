@@ -5,51 +5,54 @@
 
 import os
 from datetime import datetime
-from pathlib import Path
 
 import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
+
+def pytest_addoption(parser):
+    parser.addoption("--headless", action="store_true", default=False, help="Run browser in headless mode")
 
 
 @pytest.fixture
-def driver():
+def driver(request):
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    headless = request.config.getoption("--headless")
+
     options = Options()
-
-    # CI-friendly headless mode
-    if os.getenv("CI") == "true":
+    if headless:
+        # 新版 Chrome 推荐的 headless 参数
         options.add_argument("--headless=new")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--window-size=1920,1080")
+    options.add_argument("--window-size=1280,720")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(options=options)
-    yield driver
-    driver.quit()
+    drv = webdriver.Chrome(options=options)
+    yield drv
+    drv.quit()
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
 
+    #save png in artifacts/screenshots/  when fails
 
     outcome = yield
-    report = outcome.get_result()
+    rep = outcome.get_result()
 
-    # Only care about the actual test execution ("call"), not setup/teardown
-    if report.when != "call":
-        return
-
-    if report.failed:
-        driver = item.funcargs.get("driver")
-        if not driver:
+    if rep.when == "call" and rep.failed and "ui" in item.keywords:
+        drv = item.funcargs.get("driver")
+        if not drv:
             return
-        #artifacts/screenshots
-        screenshots_dir = Path("artifacts") / "screenshots"
-        screenshots_dir.mkdir(parents=True, exist_ok=True)
 
+        os.makedirs("artifacts/screenshots", exist_ok=True)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Make a safe filename
-        safe_name = item.nodeid.replace("/", "_").replace("::", "__").replace("\\", "_")
-        filename = screenshots_dir / f"{safe_name}_{ts}.png"
+        filename = f"artifacts/screenshots/{item.name}_{ts}.png"
+        drv.save_screenshot(filename)
 
-        driver.save_screenshot(str(filename))
+        try:
+            import allure
+            allure.attach.file(filename, name="screenshot", attachment_type=allure.attachment_type.PNG)
+        except Exception:
+            pass

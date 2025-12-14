@@ -24,6 +24,5 @@ data/
 pack01/
 test_login.py
 utils/
-pages/
 allure-results/
 artifacts/

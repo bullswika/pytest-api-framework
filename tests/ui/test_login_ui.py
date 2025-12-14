@@ -3,25 +3,21 @@
 # @Email: bullswika@outlook.com
 # @File: test_login_ui.py
 
+
 import pytest
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from pages.login_page import LoginPage
+
 
 pytestmark = pytest.mark.ui
 
-@pytest.mark.smoke
+
 def test_login_saucedemo_success(driver):
-    driver.get("https://www.saucedemo.com/")
+    page = LoginPage(driver).open()
+    page.login("standard_user", "secret_sauce")
+    assert page.is_inventory_page()
 
-    wait = WebDriverWait(driver, 10)
 
-    # Wait until username input is visible
-    wait.until(EC.visibility_of_element_located((By.ID, "user-name"))).send_keys("standard_user")
-    driver.find_element(By.ID, "password").send_keys("secret_sauce")
-    driver.find_element(By.ID, "login-button").click()
-
-    # Assert we navigated to the inventory page
-    wait.until(EC.url_contains("inventory"))
-    assert "inventory" in driver.current_url
-    # assert False
+def test_login_saucedemo_invalid_password(driver):
+    page = LoginPage(driver).open()
+    page.login("standard_user", "wrong_password")
+    assert "Username and password do not match" in page.get_error_text()
