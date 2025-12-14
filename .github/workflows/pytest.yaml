@@ -27,7 +27,7 @@ jobs:
 
       - name: Run API pytest
         run: |
-          pytest -v -m "not ui"
+          pytest tests/api -v
   
   
 
