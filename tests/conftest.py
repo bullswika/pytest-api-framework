@@ -7,6 +7,8 @@ import pytest
 from common.config import BASE_URL
 from common.api_client import APIClient
 import logging
+from selenium import webdriver
+
 
 def pytest_configure():
     logging.basicConfig(
@@ -30,3 +32,11 @@ def api_client(base_url, token):
     client = APIClient(base_url=base_url, token=token)
     print(">>>setup api_client")
     return client
+
+
+@pytest.fixture
+def driver():
+    driver = webdriver.Chrome()
+    driver.maximize_window()
+    yield driver
+    driver.quit()
